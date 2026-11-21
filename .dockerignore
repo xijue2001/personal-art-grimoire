@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!requirements.txt
+!grimoire/
+!grimoire/*.py
+!site/
+!site/*.html
+!site/*.js
+!site/*.css

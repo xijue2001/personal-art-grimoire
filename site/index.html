@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>个人绘图法典</title>
+  <link rel="stylesheet" href="/site/style.css">
+  <script src="/site/app.js" defer></script>
+</head>
+<body>
+  <aside class="rail" id="sidebar">
+    <a class="brand" href="/" aria-label="个人绘图法典首页">
+      <span class="brand-mark" aria-hidden="true">典</span>
+      <span><strong>个人绘图法典</strong><small>本机提示词图鉴</small></span>
+    </a>
+    <nav id="sidebar-sections" class="sections" aria-label="板块">
+      <button type="button" class="section current" data-view="gallery" title="图鉴" aria-label="图鉴"><span aria-hidden="true">▦</span><span class="nav-label">图鉴</span><small id="gallery-count"></small></button>
+      <button type="button" class="section" data-view="styles" title="画师串" aria-label="画师串"><span aria-hidden="true">◈</span><span class="nav-label">画师串</span><small id="style-count"></small></button>
+    </nav>
+    <div id="sidebar-actions" class="rail-end">
+      <button type="button" id="open-trash" class="section" title="回收站" aria-label="回收站"><span aria-hidden="true">▤</span><span class="nav-label">回收站</span></button>
+      <button type="button" id="open-source" class="section" title="图片目录" aria-label="图片目录"><span aria-hidden="true">☷</span><span class="nav-label">图片目录</span></button>
+      <div id="source-status" class="source-status">正在检查图片目录</div>
+    </div>
+  </aside>
+  <button type="button" id="rail-toggle" class="rail-toggle" aria-label="收起导航栏" title="收起导航栏"
+    aria-expanded="true" aria-controls="sidebar"><span aria-hidden="true"></span></button>
+
+  <main class="workspace">
+    <header class="page-head">
+      <div>
+        <h1 id="page-title">图鉴</h1>
+        <p id="page-summary">按提示词查找本机作品。</p>
+      </div>
+      <button class="primary" type="button" id="scan"><span aria-hidden="true">⟳</span> 扫描新图</button>
+    </header>
+    <div id="scan-status" class="scan-status" role="status" hidden></div>
+
+    <form class="toolbar" id="search-form" aria-label="查找">
+      <label class="search">
+        <span class="search-icon" aria-hidden="true"></span>
+        <input type="search" id="query" maxlength="500" aria-label="搜索图鉴" placeholder="搜提示词，多个条件用逗号隔开" autocomplete="off">
+        <kbd aria-hidden="true">/</kbd>
+      </label>
+      <select id="model" aria-label="模型"><option value="">不限模型</option></select>
+      <select id="filter" aria-label="范围">
+        <option value="">全部</option>
+        <option value="favorite">已收藏</option>
+        <option value="pending">待补词</option>
+      </select>
+    </form>
+    <div class="results-bar">
+      <div class="results-summary">
+        <span id="result-count" role="status"></span>
+        <label id="gallery-size-control" class="gallery-size">每页
+          <select id="gallery-page-size" aria-label="每页张数"><option value="24">24 张</option></select>
+        </label>
+      </div>
+      <nav class="gallery-pages" data-gallery-pager aria-label="顶部分页" hidden>
+        <button type="button" class="soft" data-page-step="-1">上一页</button>
+        <span data-page-number></span>
+        <button type="button" class="soft" data-page-step="1">下一页</button>
+        <form class="page-jump">
+          <input type="number" aria-label="目标页码" placeholder="页码" min="1" step="1" required>
+          <button type="submit" class="soft">跳转</button>
+        </form>
+      </nav>
+    </div>
+    <section id="cards" class="cards" aria-label="搜索结果"></section>
+    <section id="empty" class="empty" hidden></section>
+    <div id="feed-status" class="feed-status" role="status" hidden></div>
+    <nav class="gallery-pages bottom-pages" data-gallery-pager aria-label="底部分页" hidden>
+      <button type="button" class="soft" data-page-step="-1">上一页</button>
+      <span data-page-number></span>
+      <button type="button" class="soft" data-page-step="1">下一页</button>
+      <form class="page-jump">
+        <input type="number" aria-label="目标页码" placeholder="页码" min="1" step="1" required>
+        <button type="submit" class="soft">跳转</button>
+      </form>
+    </nav>
+  </main>
+
+  <dialog id="source-dialog" aria-labelledby="source-title">
+    <div class="dialog-top">
+      <h2 id="source-title">图片目录</h2>
+      <button type="button" class="icon-button" data-close="source-dialog" aria-label="关闭">×</button>
+    </div>
+    <form id="source-form" class="source-form">
+      <p id="source-help" class="muted">填这台电脑上的完整路径。索引保存到法典，图片从原目录读取。</p>
+      <label>原图目录<input type="text" name="originals" required maxlength="2000" placeholder="D:\图片\originals" autocomplete="off"></label>
+      <label>缩略图目录 <span class="muted">选填</span><input type="text" name="thumbnails" maxlength="2000" placeholder="D:\图片\thumbnails" autocomplete="off"></label>
+      <label>预览目录 <span class="muted">选填</span><input type="text" name="previews" maxlength="2000" placeholder="D:\图片\previews" autocomplete="off"></label>
+      <div id="source-message" role="status"></div>
+      <button type="submit" class="primary">保存目录</button>
+    </form>
+  </dialog>
+
+  <dialog id="item-dialog" class="item-dialog" aria-labelledby="item-title">
+    <div class="dialog-top">
+      <h2 id="item-title">作品详情</h2>
+      <button type="button" class="icon-button" data-close="item-dialog" aria-label="关闭">×</button>
+    </div>
+    <div id="item-body"></div>
+  </dialog>
+  <dialog id="trash-dialog" class="item-dialog" aria-labelledby="trash-title">
+    <div class="dialog-top">
+      <h2 id="trash-title">回收站</h2>
+      <button type="button" class="icon-button" data-close="trash-dialog" aria-label="关闭">×</button>
+    </div>
+    <div class="trash-content">
+      <div class="trash-tabs" aria-label="回收站内容">
+        <button type="button" class="soft" data-trash-kind="image">已删除图片</button>
+        <button type="button" class="soft" data-trash-kind="style">已删除画师串</button>
+      </div>
+      <div id="trash-items" aria-live="polite"></div>
+    </div>
+  </dialog>
+
+  <dialog id="remove-dialog" aria-labelledby="remove-title" aria-describedby="remove-description">
+    <div class="dialog-top">
+      <h2 id="remove-title">移入回收站</h2>
+      <button type="button" class="icon-button" data-close="remove-dialog" aria-label="关闭">×</button>
+    </div>
+    <form id="remove-form" class="source-form">
+      <p id="remove-description"></p>
+      <div class="dialog-actions">
+        <button type="button" class="soft" data-close="remove-dialog" autofocus>取消</button>
+        <button type="submit" class="danger-confirm">移入回收站</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

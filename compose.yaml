@@ -1,0 +1,82 @@
+services:
+  grimoire:
+    build:
+      context: .
+      args:
+        PYTHON_IMAGE: ${GRIMOIRE_PYTHON_IMAGE:-python:3.12-slim}
+    command:
+      - --listen
+      - 0.0.0.0
+      - --public-url
+      - ${GRIMOIRE_PUBLIC_URL:-http://127.0.0.1:18770}
+      - --password-file
+      - /run/grimoire-password
+      - --database
+      - /data/catalog.sqlite3
+      - --originals
+      - /library/originals
+      - --previews
+      - /library/previews
+      - --thumbnails
+      - /library/thumbnails
+      - --source-marker
+      - "${GRIMOIRE_ORIGINALS_MARKER:-}"
+    environment:
+      GRIMOIRE_PUBLIC_URL: ${GRIMOIRE_PUBLIC_URL:-http://127.0.0.1:18770}
+    ports:
+      - "${GRIMOIRE_IP:-127.0.0.1}:${GRIMOIRE_PORT:-18770}:18770"
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./private/password
+        target: /run/grimoire-password
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${GRIMOIRE_ORIGINALS:?configure the original images path}
+        target: /library/originals
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${GRIMOIRE_PREVIEWS:-./data/empty-previews}
+        target: /library/previews
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${GRIMOIRE_THUMBNAILS:-./data/empty-thumbnails}
+        target: /library/thumbnails
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp:size=64m]
+    cpus: 1.0
+    mem_limit: 768m
+    pids_limit: 128
+    logging:
+      options:
+        max-size: "4m"
+        max-file: "2"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.parse, urllib.request;
+          host = urllib.parse.urlsplit(os.environ["GRIMOIRE_PUBLIC_URL"]).netloc;
+          response = urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:18770/health", headers={"Host": host}), timeout=3);
+          assert response.status == 200
+      interval: 20s
+      timeout: 5s
+      retries: 3
